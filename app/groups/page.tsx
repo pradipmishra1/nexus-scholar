@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import {
-  Users, Plus, UserPlus, UserMinus, Search, Filter, X, Calendar, BookOpen,
-  MapPin, ChevronRight, MessageCircle, Share2, MoreVertical, Crown,
-  Clock, ArrowUpRight, Sparkles, Compass, Heart, Globe, Lock, Loader2,
+  Users, Plus, UserPlus, UserMinus, Search, X, Calendar,
+  BookOpen, ChevronRight, MessageCircle, Crown, Clock, Sparkles,
+  Compass, Loader2, Filter,
 } from "lucide-react";
+import GroupChatModal from "@/components/GroupChatModal";
 
 interface Group {
   id: number;
@@ -35,6 +36,7 @@ export default function GroupsPage() {
   const [groupForm, setGroupForm] = useState({ name: "", subject: "", description: "" });
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState<number | null>(null);
+  const [chatGroup, setChatGroup] = useState<{ id: number; name: string } | null>(null);
 
   const fetchGroups = async () => {
     setLoading(true);
@@ -79,7 +81,7 @@ export default function GroupsPage() {
   }, [groups, activeTab, searchQuery]);
 
   const handleCreateGroup = async () => {
-    if (!groupForm.name.trim()) return;
+    if (!groupForm.name.trim() || !user) return;
     setCreating(true);
     const { data, error } = await supabase
       .from("groups")
@@ -102,6 +104,7 @@ export default function GroupsPage() {
   };
 
   const handleJoinGroup = async (groupId: number) => {
+    if (!user) return;
     setJoining(groupId);
     await supabase.from("group_members").insert({ group_id: groupId, user_id: user.id });
     await fetchGroups();
@@ -109,6 +112,7 @@ export default function GroupsPage() {
   };
 
   const handleLeaveGroup = async (groupId: number) => {
+    if (!user) return;
     setJoining(groupId);
     await supabase.from("group_members").delete().eq("group_id", groupId).eq("user_id", user.id);
     await fetchGroups();
@@ -128,6 +132,8 @@ export default function GroupsPage() {
       transition: { delay: i * 0.05, duration: 0.2 },
     }),
   };
+
+  if (!user) return null;
 
   return (
     <div className="pb-4">
@@ -210,14 +216,6 @@ export default function GroupsPage() {
                     ? "Join a group to see it here!"
                     : "Be the first to create one!"}
                 </p>
-                {activeTab === "discover" && (
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="mt-4 text-indigo-600 text-sm font-medium flex items-center justify-center gap-1 mx-auto"
-                  >
-                    <Plus className="w-4 h-4" /> Create Group
-                  </button>
-                )}
               </div>
             ) : (
               <div className="space-y-3">
@@ -261,33 +259,43 @@ export default function GroupsPage() {
                         <Clock className="w-3 h-3" />
                         Created {new Date(group.created_at).toLocaleDateString()}
                       </span>
-                      {group.is_member ? (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleLeaveGroup(group.id); }}
-                          disabled={joining === group.id}
-                          className="text-red-500 text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 hover:bg-red-100 transition"
-                        >
-                          {joining === group.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <UserMinus className="w-4 h-4" />
-                          )}
-                          Leave
-                        </button>
-                      ) : (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleJoinGroup(group.id); }}
-                          disabled={joining === group.id}
-                          className="text-indigo-600 text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 transition"
-                        >
-                          {joining === group.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <UserPlus className="w-4 h-4" />
-                          )}
-                          Join
-                        </button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {group.is_member && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setChatGroup({ id: group.id, name: group.name }); }}
+                            className="p-2 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                        {group.is_member ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleLeaveGroup(group.id); }}
+                            disabled={joining === group.id}
+                            className="text-red-500 text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50 hover:bg-red-100 transition"
+                          >
+                            {joining === group.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <UserMinus className="w-4 h-4" />
+                            )}
+                            Leave
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleJoinGroup(group.id); }}
+                            disabled={joining === group.id}
+                            className="text-indigo-600 text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 transition"
+                          >
+                            {joining === group.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <UserPlus className="w-4 h-4" />
+                            )}
+                            Join
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -347,7 +355,7 @@ export default function GroupsPage() {
         )}
       </AnimatePresence>
 
-      {/* Create Modal (alternative for quick create from other tabs) */}
+      {/* Create Modal (alternative) */}
       <AnimatePresence>
         {showCreateModal && (
           <motion.div
@@ -446,12 +454,20 @@ export default function GroupsPage() {
                 <p className="text-slate-600 mb-4">{selectedGroup.description}</p>
                 <div className="border-t pt-4 flex gap-2">
                   {selectedGroup.is_member ? (
-                    <button
-                      onClick={() => { handleLeaveGroup(selectedGroup.id); setSelectedGroup(null); }}
-                      className="flex-1 py-3 border border-red-200 text-red-500 rounded-xl font-medium"
-                    >
-                      Leave Group
-                    </button>
+                    <>
+                      <button
+                        onClick={() => { setChatGroup({ id: selectedGroup.id, name: selectedGroup.name }); setSelectedGroup(null); }}
+                        className="flex-1 py-3 bg-indigo-50 text-indigo-700 rounded-xl font-medium"
+                      >
+                        Open Chat
+                      </button>
+                      <button
+                        onClick={() => { handleLeaveGroup(selectedGroup.id); setSelectedGroup(null); }}
+                        className="flex-1 py-3 border border-red-200 text-red-500 rounded-xl font-medium"
+                      >
+                        Leave Group
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={() => { handleJoinGroup(selectedGroup.id); setSelectedGroup(null); }}
@@ -460,15 +476,20 @@ export default function GroupsPage() {
                       Join Group
                     </button>
                   )}
-                  <button className="p-3 border rounded-xl">
-                    <Share2 className="w-5 h-5 text-slate-500" />
-                  </button>
                 </div>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Group Chat Modal */}
+      <GroupChatModal
+        isOpen={!!chatGroup}
+        onClose={() => setChatGroup(null)}
+        groupId={chatGroup?.id ?? 0}
+        groupName={chatGroup?.name ?? ""}
+      />
     </div>
   );
 }
