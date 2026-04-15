@@ -108,7 +108,7 @@ export default function HomePage() {
   };
 
   const handleCreatePost = async () => {
-    if (!user) return; // Fix: Ensure user is not null
+    if (!user) return;
     if (!postTitle.trim() || !postDesc.trim()) return;
     setIsUploading(true);
 
@@ -191,7 +191,7 @@ export default function HomePage() {
     }
   };
 
-  // Timer
+  // Timer - fixed version
   useEffect(() => {
     if (timerActive) {
       timerRef.current = setInterval(() => {
@@ -200,12 +200,19 @@ export default function HomePage() {
             if (timerMinutes === 0) {
               clearInterval(timerRef.current!);
               setTimerActive(false);
-              setTimerMode((prevMode) => (prevMode === "focus" ? "break" : "focus"));
-              setTimerMinutes((prevMode) => (prevMode === "focus" ? 5 : 25));
+              if (timerMode === "focus") {
+                setTimerMode("break");
+                setTimerMinutes(5);
+              } else {
+                setTimerMode("focus");
+                setTimerMinutes(25);
+              }
+              setTimerSeconds(0);
               return 0;
+            } else {
+              setTimerMinutes((m) => m - 1);
+              return 59;
             }
-            setTimerMinutes((m) => m - 1);
-            return 59;
           }
           return prev - 1;
         });
@@ -214,7 +221,7 @@ export default function HomePage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timerActive, timerMinutes]);
+  }, [timerActive, timerMinutes, timerMode]);
 
   // AI Transcription
   const startRecording = async () => {
