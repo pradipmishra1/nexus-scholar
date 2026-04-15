@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import webpush from "web-push";
+import * as webpush from "web-push";
 
 webpush.setVapidDetails(
   "mailto:your-email@example.com",
@@ -10,7 +10,6 @@ webpush.setVapidDetails(
 export async function POST(req: Request) {
   try {
     const subscription = await req.json();
-    // In production, store subscription in database
     console.log("New subscription:", subscription);
     return NextResponse.json({ success: true });
   } catch (error: any) {
