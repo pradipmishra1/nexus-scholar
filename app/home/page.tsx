@@ -108,6 +108,7 @@ export default function HomePage() {
   };
 
   const handleCreatePost = async () => {
+    if (!user) return; // Fix: Ensure user is not null
     if (!postTitle.trim() || !postDesc.trim()) return;
     setIsUploading(true);
 
@@ -143,7 +144,7 @@ export default function HomePage() {
 
   const handleLike = async (postId: number) => {
     const post = posts.find((p) => p.id === postId);
-    if (!post) return;
+    if (!post || !user) return;
 
     const newLikedState = !post.user_has_liked;
     setPosts((prev) =>
@@ -172,6 +173,7 @@ export default function HomePage() {
   };
 
   const handleAddComment = async (postId: number) => {
+    if (!user) return;
     const content = commentInputs[postId]?.trim();
     if (!content) return;
 
