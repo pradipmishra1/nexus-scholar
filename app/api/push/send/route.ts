@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
-import * as webpush from "web-push";
 
-webpush.setVapidDetails(
-  "mailto:your-email@example.com",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+// Only import web-push if we're in a real environment with keys
+let webpush: any = null;
+if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush = require("web-push");
+  webpush.setVapidDetails(
+    "mailto:your-email@example.com",
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 export async function POST(req: Request) {
+  if (!webpush) {
+    return NextResponse.json(
+      { error: "Push notifications not configured" },
+      { status: 503 }
+    );
+  }
+
   try {
     const { subscription, title, body, url } = await req.json();
     await webpush.sendNotification(
