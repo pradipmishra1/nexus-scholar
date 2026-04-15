@@ -4,10 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, LogOut, Bell, Trophy, Mic, Sparkles, Play, Pause, RotateCcw,
-  AlertCircle, FileText, Search, Users, User, Heart, MessageCircle, Upload,
-  X, Download, ChevronLeft, ChevronRight, Plus, UserPlus, UserMinus, Copy,
-  XCircle, Loader2, Bookmark, File, Send, MoreHorizontal, TrendingUp,
-  Calendar, Clock, Zap,
+  AlertCircle, FileText, Plus,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/lib/supabase";
@@ -21,12 +18,6 @@ const MOODS = [
   { emoji: "😐", label: "Okay" },
   { emoji: "😔", label: "Low" },
 ];
-
-const POST_TYPES = [
-  { value: "note", label: "Note", icon: "📝", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  { value: "question", label: "Question", icon: "❓", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  { value: "group", label: "Group", icon: "👥", color: "bg-green-50 text-green-700 border-green-200" },
-] as const;
 
 export default function HomePage() {
   const { user, profile, signOut } = useAuth();
@@ -100,12 +91,6 @@ export default function HomePage() {
       fetchPosts();
     }
   }, [user, fetchPosts]);
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchPosts();
-    setRefreshing(false);
-  };
 
   const handleCreatePost = async () => {
     if (!user) return;
@@ -191,7 +176,7 @@ export default function HomePage() {
     }
   };
 
-  // Timer - fixed version
+  // Timer
   useEffect(() => {
     if (timerActive) {
       timerRef.current = setInterval(() => {
@@ -223,7 +208,6 @@ export default function HomePage() {
     };
   }, [timerActive, timerMinutes, timerMode]);
 
-  // AI Transcription
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -256,7 +240,6 @@ export default function HomePage() {
     }
   };
 
-  // AI Flashcards
   const generateFlashcards = async () => {
     setIsAILoading(true);
     try {
@@ -506,7 +489,7 @@ export default function HomePage() {
               onLike={handleLike}
               onToggleComments={toggleComments}
               commentInput={commentInputs[post.id] || ""}
-              onCommentChange={(val) => setCommentInputs((prev) => ({ ...prev, [post.id]: val }))}
+              onCommentChange={(val: string) => setCommentInputs((prev) => ({ ...prev, [post.id]: val }))}
               onAddComment={handleAddComment}
             />
           ))}
