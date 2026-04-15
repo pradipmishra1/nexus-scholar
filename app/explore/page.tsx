@@ -20,7 +20,8 @@ interface Post {
   likes: number;
   created_at: string;
   profiles?: { full_name: string };
-  comments: { count: number }[];
+  comments: any[] | { count: number }[];
+  commentsCount?: number;
 }
 
 export default function ExplorePage() {
@@ -46,7 +47,7 @@ export default function ExplorePage() {
     if (data) {
       const formatted = data.map((p: any) => ({
         ...p,
-        comments: p.comments?.[0]?.count || 0,
+        commentsCount: p.comments?.[0]?.count || 0,
       }));
       setPosts(formatted);
       applyFiltersAndSort(formatted, searchQuery, selectedType, sortBy);
@@ -87,8 +88,6 @@ export default function ExplorePage() {
       filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     } else if (sort === "popular") {
       filtered.sort((a, b) => b.likes - a.likes);
-    } else if (sort === "trending") {
-      // Trending is already handled separately
     }
 
     setFilteredPosts(filtered);
@@ -104,7 +103,6 @@ export default function ExplorePage() {
 
   const handleSave = (postId: number) => {
     setSaving(postId);
-    // Placeholder for bookmark functionality
     setTimeout(() => setSaving(null), 500);
   };
 
@@ -254,7 +252,7 @@ export default function ExplorePage() {
                     <Heart className="w-3 h-3" /> {post.likes}
                   </span>
                   <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <MessageCircle className="w-3 h-3" /> {post.comments}
+                    <MessageCircle className="w-3 h-3" /> {post.commentsCount || 0}
                   </span>
                 </div>
               </motion.div>
@@ -317,7 +315,7 @@ export default function ExplorePage() {
                   <Heart className="w-3.5 h-3.5" /> {post.likes}
                 </span>
                 <span className="text-xs text-slate-400 flex items-center gap-1">
-                  <MessageCircle className="w-3.5 h-3.5" /> {post.comments}
+                  <MessageCircle className="w-3.5 h-3.5" /> {post.commentsCount || 0}
                 </span>
                 <span className="text-xs text-slate-400 flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
@@ -384,7 +382,7 @@ export default function ExplorePage() {
                 )}
                 <div className="flex items-center gap-4 mt-4 text-slate-500">
                   <span className="flex items-center gap-1"><Heart className="w-4 h-4" /> {selectedPost.likes}</span>
-                  <span className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {selectedPost.comments}</span>
+                  <span className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {selectedPost.commentsCount || 0}</span>
                   <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {new Date(selectedPost.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
