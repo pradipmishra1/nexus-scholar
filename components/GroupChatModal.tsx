@@ -39,7 +39,6 @@ export default function GroupChatModal({ isOpen, onClose, groupId, groupName }: 
 
     fetchMessages();
 
-    // Subscribe to new messages
     const channel = supabase
       .channel(`group-${groupId}`)
       .on(
@@ -63,9 +62,13 @@ export default function GroupChatModal({ isOpen, onClose, groupId, groupName }: 
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !user) return;
     setSending(true);
-    await supabase.from("messages").insert({ group_id: groupId, user_id: user.id, content: newMessage });
+    await supabase.from("messages").insert({
+      group_id: groupId,
+      user_id: user.id,
+      content: newMessage,
+    });
     setNewMessage("");
     setSending(false);
   };
@@ -88,7 +91,6 @@ export default function GroupChatModal({ isOpen, onClose, groupId, groupName }: 
           className="bg-white rounded-2xl max-w-md w-full h-[600px] flex flex-col shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="p-4 border-b flex justify-between items-center">
             <h3 className="font-semibold text-lg">{groupName}</h3>
             <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full">
@@ -96,7 +98,6 @@ export default function GroupChatModal({ isOpen, onClose, groupId, groupName }: 
             </button>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {loading ? (
               <div className="flex justify-center">
@@ -106,7 +107,7 @@ export default function GroupChatModal({ isOpen, onClose, groupId, groupName }: 
               <p className="text-center text-slate-500">No messages yet. Start the conversation!</p>
             ) : (
               messages.map((msg) => {
-                const isOwn = msg.user_id === user.id;
+                const isOwn = msg.user_id === user?.id;
                 return (
                   <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[75%] ${isOwn ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-800"} rounded-2xl px-4 py-2`}>
@@ -123,7 +124,6 @@ export default function GroupChatModal({ isOpen, onClose, groupId, groupName }: 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <form onSubmit={handleSend} className="p-4 border-t flex gap-2">
             <input
               type="text"
